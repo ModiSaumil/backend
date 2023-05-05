@@ -135,7 +135,7 @@ const storage = multer.diskStorage({
         cb(null, "./uploads/");
     },
     filename: (req, file, cb) => {
-        cb(null,file.originalname)
+        cb(null, file.originalname)
         //const fileName = file.originalname.toLowerCase().split('').join('-');
         //cb(null,fileName)
     }
@@ -143,7 +143,7 @@ const storage = multer.diskStorage({
 
 //photo filters
 const fileFilter = (req, file, callback) => {
-    const acceptableExt = [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG",".heic","HEIC"];
+    const acceptableExt = [".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG", ".heic", "HEIC"];
     if (!acceptableExt.includes(Path.extname(file.originalname))) {
         return callback(new Error("Only .png, .jpg  .jpeg .heic format allowed !!"));
     }
@@ -499,6 +499,26 @@ app.delete("/delete_institute/:id", async (req, resp, next) => {
     resp.send(result);
 })
 
+//searchcomments
+app.get("/searchcmts/:key", async (req, resp, next) => {
+    let prod = await photocmt.find(
+        {
+            "$or": [
+                {
+                    "comment": { $regex: req.params.key }
+                },
+            ]
+        }
+    );
+    if (prod.length > 0) {
+        resp.send(prod)
+    } else {
+        resp.send({ result: "no keyword found" })
+    }
+})
+
+
+
 //searchtagsw
 app.get("/searchtags/:key", async (req, resp, next) => {
     let prod = await Product.find(
@@ -513,14 +533,13 @@ app.get("/searchtags/:key", async (req, resp, next) => {
                 {
                     "category": { $regex: req.params.key }
                 },
-
             ]
         }
     );
     if (prod.length > 0) {
         resp.send(prod)
     } else {
-        resp.send({ result: "no keyword found" })
+        resp.send({ result: "no comments found" })
     }
 })
 
@@ -545,7 +564,7 @@ app.get("/searchinst/:key", async (req, resp, next) => {
 app.get("/searchuser/:key", async (req, resp, next) => {
     let user = await User.find(
         {
-            "$or": [            
+            "$or": [
                 {
                     "role": "photog",
                 },
@@ -578,12 +597,12 @@ app.get("/getPhotosbyid/:id", async (req, resp, next) => {
 
 
 //insert multiple photos
-app.post("/addproductmultiple", upload.array("imgCollection", 6),  (req, resp, next) => {
+app.post("/addproductmultiple", upload.array("imgCollection", 6), (req, resp, next) => {
     const filesArray = [];
     const url = req.protocol + '://' + req.get('host')
 
     //return console.log(req.files.length);
-    
+
     for (var i = 0; i < req.files.length; i++) {
         const path = req.files[i] != undefined ? req.files[i].path.replace(/\\/g, "/") : "";
         filesArray.push(url + '/' + path)
@@ -593,19 +612,19 @@ app.post("/addproductmultiple", upload.array("imgCollection", 6),  (req, resp, n
     const mulp = new Productmul({
         imgCollection: filesArray
     });
-    mulp.save().then(result =>{
+    mulp.save().then(result => {
         resp.status(201).json({
             messasge: "done upload!",
-            productAdded : {
-                _id : result._id,
-                imgCollection : result.imgCollection
+            productAdded: {
+                _id: result._id,
+                imgCollection: result.imgCollection
             }
         })
     }).catch(err => {
         console.log(err),
-        resp.status(500).json({
-            error:err
-        });
+            resp.status(500).json({
+                error: err
+            });
     })
 })
 
